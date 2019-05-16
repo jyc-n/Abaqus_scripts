@@ -2,7 +2,7 @@
     Python Command File to run Abaqus
     including:
         mesher
-        postprocessor
+        preprocessor
 '''
 import sys
 import os
@@ -16,7 +16,7 @@ import math
 MAX_THREADS = 24
 
 def modify_inp(fileID, EModulus, thk):
-    inp_in = "original.inp"
+    inp_in = "original1c.inp"
     jobName = "Job-"+str(fileID)
     inp_out = jobName+".inp"
     fout = open(inp_out, 'w')
@@ -95,7 +95,9 @@ def postprocess(fileID):
 def get_max_dimensions(fileID):
     myfile = "Job-"+str(fileID)+"_output.txt"
 
+    #! this need to match the exact number of nodes!
     nn = 441
+    #! -----------------
 
     # read all coordinates
     with open(myfile, 'r') as fin:
@@ -114,7 +116,6 @@ def get_max_dimensions(fileID):
     max_angle2 = 0
     max_xspan = 0.0
     max_yspan = 0.0
-    max_zspan = 0.0
     for angle in range(90):
         rad = float(angle)/180.0 * math.pi
         matR = np.matrix(  [[ math.cos(rad), math.sin(rad), 0.0],
@@ -138,15 +139,14 @@ def get_max_dimensions(fileID):
         if max_yspan < yspan:
             max_yspan = yspan
             max_angle2 = angle
-        max_zspan = zspan
         # info = "{:4.1f}".format(angle) + " " + "{:e}".format(xspan) + " " + "{:e}".format(yspan) + " " + "{:e}".format(zspan)
         # print(info)
 
     # format and write to file, (angle, width, height)
     if max_xspan > max_yspan:
-        info = "{:4.1f}".format(max_angle1) + " " + "{:e}".format(max_xspan) + " " + "{:e}".format(max_zspan)
+        info = "{:4.1f}".format(max_angle1) + " " + "{:e}".format(max_xspan) + " " + "{:e}".format(zspan)
     else:
-        info = "{:4.1f}".format(max_angle2+90) + " " + "{:e}".format(max_yspan) + " " + "{:e}".format(max_zspan)
+        info = "{:4.1f}".format(max_angle2+90) + " " + "{:e}".format(max_yspan) + " " + "{:e}".format(zspan)
     return info
 
 
@@ -172,7 +172,7 @@ def thread_run(fileID, E, thk):
 if __name__ == "__main__":
     args = sys.argv
     if len(args) != 2:
-        sys.exit("Must give an arguments!")
+        sys.exit("Must give an argument!")
 
     try:
         # parameters
@@ -184,15 +184,16 @@ if __name__ == "__main__":
 
         #! delete this
         # list_E = [1e5, 1e6, 1e7]
-        # list_t = [1e-4]
+        # list_t = [1e-3]
         #! ----------
         list_ID = []
 
-        # operations
+        # meshing
         cmd = args[-1]
-        if cmd == 'mesh':
+        if cmd == 'pre':
             # nside = 3
-            # dx = 0.1/nside
+            # side_len = 0.5
+            # dx = side_len/float(nside)
             # geo = Geometry(nside, nside, dx)
             # geo.doMesh()
             pass
@@ -206,7 +207,7 @@ if __name__ == "__main__":
                     fileID = int(str(i+1)+str(j+1))
                     modify_inp(fileID, E, thk)
 
-        # run simulation
+        # run multiple simulation
         elif cmd == 'run':
 
             #* the following operations are in parallel
