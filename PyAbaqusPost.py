@@ -12,9 +12,12 @@ outputDataFile = odbname[:-4] + '_output.txt'
 
 odb = openOdb(odbname)
 
-instance = odb.rootAssembly.instances['CLOTH-1']
+# instance = odb.rootAssembly.instances['CLOTH-1']
+instance = odb.rootAssembly.instances['PART-SHELL-1']
 
-finalShape = odb.steps['Step-2'].frames[-1]
+# finalShape = odb.steps['Step-2'].frames[-1]
+finalShape = odb.steps['Step-1'].frames[-1]
+
 xyz = finalShape.fieldOutputs['COORD'].values
 
 numNodesTotal = len( xyz )

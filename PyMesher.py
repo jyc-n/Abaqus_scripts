@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
@@ -15,6 +16,13 @@ class Geometry:
         self.nel = 2 * (self.__nlen-1) * (self.__nwid-1)
         self.coord = np.empty([self.nn, 3], dtype = float)
         self.conn = np.empty([self.nel, 3], dtype = int)
+
+    # accessor
+    def getNLen(self):
+        return self.__nlen
+    
+    def getNWid(self):
+        return self.__nwid
 
     # build mesh
     def buildMesh(self):
@@ -63,6 +71,29 @@ class Geometry:
         return [str(n_start)+", "+str(n_end)+", "+str(self.__nlen),
                 str(e_start)+", "+str(e_end)+", "+str(2*(self.__nlen-1))]
 
+    # get edges
+    def getEdges(self, side):
+        if side == "left":
+            n_start = 1
+            n_end = n_start + (self.__nwid-1) * self.__nlen
+            e_start = 2
+            e_end = e_start + (self.__nwid-2) * 2*(self.__nlen-1)
+        elif side == "right":
+            n_start = self.__nlen
+            n_end = n_start + (self.__nwid-1) * self.__nlen
+            e_start = 2*(self.__nlen-1)-1
+            e_end = e_start + (self.__nwid-2) * 2*(self.__nlen-1)
+        else:
+            raise "wrong side requests!"
+        return [str(n_start)+", "+str(n_end)+", "+str(self.__nlen),
+                str(e_start)+", "+str(e_end)+", "+str(2*(self.__nlen-1))]
+
+    # get centerline nodes
+    def getCenterline(self):
+        n_start = math.floor((self.__nlen+1) / 2)
+        n_end = n_start + (self.__nwid-1) * self.__nlen
+        return [str(n_start)+", "+str(n_end)+", "+str(self.__nlen)]
+
     # build nodal coordinates
     def __seeding(self, datum_opt=1):
         for i in range(0, self.__nwid):
@@ -91,7 +122,7 @@ class Geometry:
     def __meshing(self):
         for i in range(0, self.__nwid-1):
             for j in range(0, self.__nlen-1):
-                el1 = 2 * ((self.__nwid-1) * i + j)
+                el1 = 2 * ((self.__nlen-1) * i + j)
                 el2 = el1 + 1
                 self.conn[el1, 0] = i * self.__nlen + j + 1
                 self.conn[el1, 1] = i * self.__nlen + j + 2
@@ -102,7 +133,7 @@ class Geometry:
                 
     # write coordinate file
     def writeXYZ(self, jobID):
-        filename = "Job-" + str(jobID) + "-coordinates.txt"
+        filename = jobID + "-coordinates.txt"
         with open(filename, 'w') as fout:
             
             for inn in range(self.nn):
@@ -110,7 +141,7 @@ class Geometry:
     
     # write connectivity file
     def writeMesh(self, jobID):
-        filename = "Job-" + str(jobID) + "-connectivity.txt"
+        filename = jobID + "-connectivity.txt"
         with open(filename, 'w') as fout:
             for iel in range(self.nel):
                 fout.write("%6d, %6d, %6d, %6d\n" % (iel+1, self.conn[iel, 0], self.conn[iel, 1], self.conn[iel, 2]))
