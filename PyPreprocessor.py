@@ -9,7 +9,7 @@ from PyMesher import Geometry
 class InpFile:
 
     # constructor, pass in side length and nodes along a side
-    def __init__(self, jobID, t_len, t_wid, t_nlen, t_nwid):
+    def __init__(self, jobName, t_len, t_wid, t_nlen, t_nwid, t_thk=3e-4, t_E=2e6):
         
         # create mesh
         dx  = t_len / float(t_nlen-1)
@@ -17,9 +17,10 @@ class InpFile:
         self.geo = Geometry(t_nlen, t_nwid, dx, dy)
         self.geo.buildMesh()
 
-        #* hard coded physical parameters
-        self.__thk = 3e-4
-        self.__E   = 2e6
+        self.__thk = t_thk
+        self.__E   = t_E
+
+        # hard coded physical parameters
         self.__nu  = 0.3
         self.__rho = 1e3
 
@@ -27,7 +28,7 @@ class InpFile:
         # self.geo.plotMesh()
 
         # Job file prefix
-        self.__jobID = jobID
+        self.__jobName = jobName
 
     # assign E and thk
     def setParam(self, t_E, t_thk):
@@ -35,15 +36,15 @@ class InpFile:
         self.__thk = t_thk
 
     # main file to write abaqus input file (cantilever)
-    def writeInp(self):
+    def writeInp1(self):
         # write coordinate and connecitivty files
-        self.geo.writeXYZ(self.__jobID)
-        self.geo.writeMesh(self.__jobID)
+        self.geo.writeXYZ(self.__jobName)
+        self.geo.writeMesh(self.__jobName)
 
         # create input file
-        filename = self.__jobID + ".inp"
-        fxyz = self.__jobID + "-coordinates.txt"
-        fconn = self.__jobID + "-connectivity.txt"
+        filename = self.__jobName + ".inp"
+        fxyz = self.__jobName + "-coordinates.txt"
+        fconn = self.__jobName + "-connectivity.txt"
 
         with open(filename, 'w') as fout:
 
@@ -148,13 +149,13 @@ class InpFile:
     # hanging corner
     def writeInp2(self):
         # write coordinate and connecitivty files
-        self.geo.writeXYZ(self.__jobID)
-        self.geo.writeMesh(self.__jobID)
+        self.geo.writeXYZ(self.__jobName)
+        self.geo.writeMesh(self.__jobName)
 
         # create input file
-        filename = self.__jobID + ".inp"
-        fxyz = self.__jobID + "-coordinates.txt"
-        fconn = self.__jobID + "-connectivity.txt"
+        filename = self.__jobName + ".inp"
+        fxyz = self.__jobName + "-coordinates.txt"
+        fconn = self.__jobName + "-connectivity.txt"
 
         with open(filename, 'w') as fout:
 
@@ -221,12 +222,13 @@ class InpFile:
                        "Set-corner, 1, 3\n")
 
             #! write steps
+            max_time = 30
             fout.write("**\n"+
                        "**  STEP: Step-1\n"+
                        "**\n")
             fout.write("*Step, name=Step-1, nlgeom=YES, inc=1000\n"+
                        "*Dynamic,application=QUASI-STATIC,initial=NO\n"+
-                       "0.01,10.,1e-05\n")
+                       "0.01,"+"{:d}".format(max_time)+",1e-05\n")
             fout.write("**\n"+
                        "**  LOADS\n"+
                        "**\n")
@@ -257,13 +259,13 @@ class InpFile:
     # simply supported plate under concentrated force
     def writeInp3(self):
         # write coordinate and connecitivty files
-        self.geo.writeXYZ(self.__jobID)
-        self.geo.writeMesh(self.__jobID)
+        self.geo.writeXYZ(self.__jobName)
+        self.geo.writeMesh(self.__jobName)
 
         # create input file
-        filename = self.__jobID + ".inp"
-        fxyz = self.__jobID + "-coordinates.txt"
-        fconn = self.__jobID + "-connectivity.txt"
+        filename = self.__jobName + ".inp"
+        fxyz = self.__jobName + "-coordinates.txt"
+        fconn = self.__jobName + "-connectivity.txt"
 
         with open(filename, 'w') as fout:
 
