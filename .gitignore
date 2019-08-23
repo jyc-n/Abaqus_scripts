@@ -2,3 +2,6 @@
 *.txt
 *.inp
 test.*
+*.m
+Results/
+__pycache__/

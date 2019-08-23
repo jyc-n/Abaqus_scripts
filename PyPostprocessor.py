@@ -49,9 +49,9 @@ def get_dims(jobName, nside):
             line = "{:e} {:e} {:e}".format(coord[i,0], coord[i,1], coord[i,2])
             fout.write(line+"\n")
 
-    # return max_wid, horizontal dist between 2&3, max height, planar dist between 1&4
+    # return max_wid, dist between 2&3, max height, planar dist between 1&4
     max_wid = coord[:,1].max() - coord[:,1].min()
-    h_dist23 = abs(vecDist2[1])
+    h_dist23 = np.linalg.norm(vecDist2)
     max_height = coord[-1,2]
     h_dist14 = np.linalg.norm(np.array([vecDist1[0],vecDist1[1]], dtype=float))
     info = "{:e} {:e} {:e} {:e}".format(max_wid, h_dist23, max_height, h_dist14)
@@ -62,3 +62,8 @@ def get_dims(jobName, nside):
 def projNodes(nvec1, nvec2, nvec3, node):
     t_node = np.array([np.dot(node,nvec1), np.dot(node,nvec2), np.dot(node,nvec3)], dtype=float)
     return t_node
+
+# if __name__ == "__main__":
+#     for i in range(7,19+1):
+#         filename = "Job-1"+str(i)
+#         print(filename + " " + get_dims(filename, 20))

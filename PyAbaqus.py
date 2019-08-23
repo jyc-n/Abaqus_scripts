@@ -29,15 +29,18 @@ class SimCase:
 
     # write inp
     def writeInpFile(self, opt):
+        #* cantilever
         if opt == 1:
-            #* cantilever
             self.inp.writeInp1()
+        #* hanging
         elif opt == 2:
-            #* hanging
             self.inp.writeInp2()
+        #* unaxial tension
         elif opt == 3:
-            #* simply supported
             self.inp.writeInp3()
+        #* 2-element
+        elif opt == 4:
+            self.inp.writeInp4()
         else:
             raise "wrong input file options, only 1, 2, 3 allowed!"
 
@@ -51,7 +54,7 @@ class SimCase:
         print(self.jobName+".inp found. Abaqus launched")
 
         # run job in subprocess
-        cmd = "/home/khalidjm/abaqus/Commands/abaqus j="+self.jobName+" input="+inpFile
+        cmd = "/home/khalidjm/abaqus/Commands/abaqus j="+self.jobName+" double input="+inpFile
         SimProcess = subprocess.Popen(cmd, shell=True)
         SimProcess.communicate()
 
@@ -145,7 +148,7 @@ class SimPool:
         # run simulations
         icase.run()
 
-        # if the job completed in 1000 increments, continue
+        # if the job completed in max allowable increments, continue
         if icase.FLAG_SUCCESS:
             # read ODB files
             icase.post_case()
@@ -218,6 +221,9 @@ class SimPool:
         for icase in self.list_case:
             case_data = "{:.3f} {:.3f} {:d} {:d} {:e} {:e}".format(
                         icase.len, icase.wid, icase.nlen, icase.nwid, icase.thk, icase.E)
+            if not icase.FLAG_SUCCESS:
+                continue
+
             if FLAG_GET_DIMS:
                 info = self.all_dims[icase.jobName]
                 case_data = case_data + " " + info + "\n"
@@ -232,27 +238,27 @@ def main():
 
     try:
         cmd = args[-1]
+        inp_opt = 3           # 1-cantilever, 2-hanging, 3-uniaxial, 4-two-element
+        FLAG_TYPE = False     # True - parameter test, False - refinement test
+        GET_DIMS = True
 
         # meshing and generate 1 inp
         if cmd == 'pre':
             # list for refinement test
-            list1 = [20]
+            list1 = [3]
             list2 = list1
-            FLAG_TYPE = False     # True - parameter test, False - refinement test
-            inp_opt = 2
+
             t_Pool = SimPool(FLAG_TYPE, list1, list2)
-            t_Pool.pre_all(inp_opt, 0.1, 20, 3e-4, 2e6)
+            t_Pool.pre_all(inp_opt, 0.1, 2, 1e-3, 1e9)
 
         # simply run a single simulation
         elif cmd == 'srun':
-            # list for refinement test
-            list1 = [20]
+            # two-element test
+            list1 = [2]
             list2 = list1
-            FLAG_TYPE = False     # True - parameter test, False - refinement test
-            GET_DIMS = True
-            inp_opt = 2
+
             t_Pool = SimPool(FLAG_TYPE, list1, list2)
-            t_Pool.pre_all(inp_opt)       # use default parameters
+            t_Pool.pre_all(inp_opt, 0.1, 2, 3e-4, 1e9)
             # t_Pool.run_case(0, True)
             t_Pool.run_all(GET_DIMS)
             t_Pool.get_results()
@@ -274,15 +280,17 @@ def main():
 
         # run refinement test
         elif cmd == 'refine':
+            if FLAG_TYPE == True:
+                raise "check your FLAG_TYPE!"
             # list for refinement test
-            list1 = list(range(25,75+1,5))
+            # list1 = list(range(25,75+1,5))
+            list1 = list(range(21,76+1,5))
             # list1 = [20, 25, 30]
             list2 = list1
-            FLAG_TYPE = False     # True - parameter test, False - refinement test
-            GET_DIMS = True
-            inp_opt = 2
+
             t_Pool = SimPool(FLAG_TYPE, list1, list2)
             t_Pool.pre_all(inp_opt)       # use default parameters
+            # t_Pool.pre_all(inp_opt, 0.1, 11, 1e-3, 1e9)
             t_Pool.run_all(GET_DIMS)
             t_Pool.get_results()
             t_Pool.get_params_info(GET_DIMS)
@@ -293,21 +301,24 @@ def main():
 
         # run multiple simulation
         elif cmd == 'param':
+            if FLAG_TYPE == False:
+                raise "check your FLAG_TYPE!"
             # list for varying E (list1) and thk (list2)
-            list1 = list(range(1,10))
-            list1.extend(list(range(10,101,10)))
-            list1 = [i*1e5 for i in list1]
-            list2 = list(range(1,11))
-            list2 = [i*1e-4 for i in list2]
-            FLAG_TYPE = True     # True - parameter test, False - refinement test
-            GET_DIMS = True
-            inp_opt = 2
+            # list1 = list(range(1,10))
+            # list1.extend(list(range(10,101,10)))
+            # list1 = [i*1e5 for i in list1]
+            # list2 = list(range(1,11))
+            # list2 = [i*1e-4 for i in list2]
+            list1 = [2e6]
+            list2 = list(range(1,10))
+            list2.extend(list(range(10,101,10)))
+            list2 = [i*1e-5 for i in list2]
+
             t_Pool = SimPool(FLAG_TYPE, list1, list2)
-            t_Pool.pre_all(inp_opt)       # use default parameters
+            t_Pool.pre_all(inp_opt, 0.1,20)       # use default parameters
             t_Pool.run_all(GET_DIMS)
             t_Pool.get_results()
             t_Pool.get_params_info(GET_DIMS)
-
 
         elif cmd == "clear":
             # TODO: implement a clear command

@@ -132,13 +132,16 @@ class Geometry:
                 self.conn[el2, 2] = i * self.__nlen + j + 1
                 
     # write coordinate file
-    def writeXYZ(self, jobID):
+    def writeXYZ(self, jobID, dim=3):
         filename = jobID + "-coordinates.txt"
         with open(filename, 'w') as fout:
-            
-            for inn in range(self.nn):
-                fout.write("%6d, %12.8f, %12.8f, %12.8f\n" % (inn+1, self.coord[inn, 0], self.coord[inn, 1], self.coord[inn, 2]))    
-    
+            if dim==3:
+                for inn in range(self.nn):
+                    fout.write("%6d, %12.8f, %12.8f, %12.8f\n" % (inn+1, self.coord[inn, 0], self.coord[inn, 1], self.coord[inn, 2]))    
+            elif dim==2:
+                for inn in range(self.nn):
+                    fout.write("%6d, %12.8f, %12.8f\n" % (inn+1, self.coord[inn, 0], self.coord[inn, 1]))
+
     # write connectivity file
     def writeMesh(self, jobID):
         filename = jobID + "-connectivity.txt"
